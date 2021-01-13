@@ -10,8 +10,6 @@ module Lamdu.GUI.Monad
     --
     , readMScopeId, withLocalMScopeId
     --
-    , isHoleResult, withLocalIsHoleResult
-    --
     , im
     , IOM(..), iom
 
@@ -82,7 +80,6 @@ data Askable env i o = Askable
     , _aDepthLeft :: Int
     , _aMScopeId :: CurAndPrev (Maybe ScopeId)
     , _aStyle :: Style
-    , _aIsHoleResult :: Bool
     , _aDirLayout :: Dir.Layout
     , aIom :: forall x. i x -> o x
     , _aEnv :: env
@@ -185,12 +182,6 @@ makeBinder ::
     ExprGui.Expr Sugar.Binder i o -> GuiM env i o (Responsive.Responsive o)
 makeBinder = make aMakeBinder
 
-isHoleResult :: MonadReader (Askable env i o) m => m Bool
-isHoleResult = Lens.view aIsHoleResult
-
-withLocalIsHoleResult :: MonadReader (Askable env i o) m => m a -> m a
-withLocalIsHoleResult = Reader.local (aIsHoleResult .~ True)
-
 run ::
     ( GuiState.HasState env, Spacer.HasStdSpacing env, Has Dir.Layout env
     , Has Config env, Has Theme env
@@ -218,7 +209,6 @@ run assocTagName_ makeSubexpr mkBinder theGuiAnchors env liftIom (GuiM action) =
     , _aDepthLeft = env ^. has . Config.maxExprDepth
     , _aMScopeId = Just topLevelScopeId & pure
     , _aStyle = env ^. has
-    , _aIsHoleResult = False
     , _aDirLayout = env ^. has
     , _aEnv = env
     , aIom = liftIom

@@ -110,7 +110,6 @@ instance Functor i => MarkBodyAnnotations v n i o IfElse where
         )
 
 instance Functor i => MarkBodyAnnotations v n i o Term where
-    markBodyAnnotations BodyPlaceHolder = (neverShowAnnotations, BodyPlaceHolder)
     markBodyAnnotations (BodyLiteral x@LiteralBytes{}) = (dontShowEval, BodyLiteral x)
     markBodyAnnotations (BodyLiteral x) = (neverShowAnnotations, BodyLiteral x)
     markBodyAnnotations (BodyRecord x) =
@@ -163,18 +162,18 @@ instance Functor i => MarkBodyAnnotations v n i o Term where
             & cBody . cItems . Lens.mapped . ciExpr . hVal %~ markCaseHandler
             & BodyCase
         )
-    markBodyAnnotations (BodyHole x) =
+    markBodyAnnotations BodyHole =
         ( alwaysShowAnnotations
-        , x & BodyHole
+        , BodyHole
         )
-    markBodyAnnotations (BodyFragment (Fragment e h t o)) =
+    markBodyAnnotations (BodyFragment (Fragment e h t)) =
         ( alwaysShowAnnotations
         , Fragment
             ( markNodeAnnotations e
                 & if Lens.has Lens._Just t
                     then nonHoleAnn .~ dontShowType
                     else id
-            ) h t o
+            ) h t
             & BodyFragment
         )
 

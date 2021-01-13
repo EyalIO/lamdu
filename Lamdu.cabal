@@ -117,7 +117,6 @@ Test-Suite Tests
                , Tests.Readme
                , Tests.Stdlib
                , Tests.Sugar
-               , Tests.Suggest
                , Tests.WidgetGlue
   build-depends:
       base, HUnit, test-framework, test-framework-hunit, test-framework-quickcheck2
@@ -346,11 +345,6 @@ Library
                   , Lamdu.GUI.Expr.GetVarEdit
                   , Lamdu.GUI.Expr.IfElseEdit
                   , Lamdu.GUI.Expr.HoleEdit
-                  , Lamdu.GUI.Expr.HoleEdit.ResultGroups
-                  , Lamdu.GUI.Expr.HoleEdit.ResultWidget
-                  , Lamdu.GUI.Expr.HoleEdit.SearchArea
-                  , Lamdu.GUI.Expr.HoleEdit.ValTerms
-                  , Lamdu.GUI.Expr.HoleEdit.WidgetIds
                   , Lamdu.GUI.Expr.InjectEdit
                   , Lamdu.GUI.Expr.LambdaEdit
                   , Lamdu.GUI.Expr.LiteralEdit
@@ -412,7 +406,6 @@ Library
                   , Lamdu.Sugar.Convert.Binder.Redex
                   , Lamdu.Sugar.Convert.Binder.Types
                   , Lamdu.Sugar.Convert.Case
-                  , Lamdu.Sugar.Convert.Completions
                   , Lamdu.Sugar.Convert.Composite
                   , Lamdu.Sugar.Convert.DefExpr
                   , Lamdu.Sugar.Convert.DefExpr.OutdatedDefs
@@ -425,8 +418,6 @@ Library
                   , Lamdu.Sugar.Convert.GetVar
                   , Lamdu.Sugar.Convert.IfElse
                   , Lamdu.Sugar.Convert.Hole
-                  , Lamdu.Sugar.Convert.Hole.ResultScore
-                  , Lamdu.Sugar.Convert.Hole.Suggest
                   , Lamdu.Sugar.Convert.Inject
                   , Lamdu.Sugar.Convert.Input
                   , Lamdu.Sugar.Convert.Load

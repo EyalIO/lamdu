@@ -300,39 +300,14 @@ toLabeledApply v app@LabeledApply{_aFunc, _aSpecialArgs, _aAnnotatedArgs, _aPunn
 
 type SugarElem t v n m (o :: * -> *) = t (Annotation v n) n (IM m) o
 
-toHoleOption ::
-    MonadNaming m =>
-    (m (ExprW Binder () (NewName m) m o ()) -> IM m (ExprW Binder () (NewName m) m o ())) ->
-    (m (NewName m) -> IM m (NewName m)) ->
-    HoleOption (OldName m) (IM m) o -> HoleOption (NewName m) (IM m) o
-toHoleOption run0 run1 option =
-    option
-    { _hoSearchTerms =
-        -- Hack: Just using TaggedVar as NameType because disambiguations aren't important in hole results
-        option ^. hoSearchTerms >>= traverse . traverse %%~ run1 . opGetName Nothing TaggedVar
-    , _hoResults = option ^. hoResults <&> _2 %~ (>>= holeResultConverted (run0 . toNode pure (toBinder pure)))
-    }
-
-toHole :: MonadNaming m => Hole (OldName m) (IM m) o -> m (Hole (NewName m) (IM m) o)
-toHole hole =
-    (,) <$> opRun <*> opRun
-    <&>
-    \(r0, r1) ->
-    hole & Sugar.holeOptions . Lens.mapped . Lens.mapped %~ toHoleOption r0 r1
-
 toFragment :: MonadNaming m => WalkBody Fragment v0 v1 m o a
-toFragment v Fragment{_fExpr, _fHeal, _fTypeMismatch, _fOptions} =
+toFragment v Fragment{_fExpr, _fHeal, _fTypeMismatch} =
     do
         newTypeMismatch <- Lens._Just toType _fTypeMismatch
         newExpr <- toExpression v _fExpr
-        r0 <- opRun
-        r1 <- opRun
         pure Fragment
             { _fExpr = newExpr
             , _fTypeMismatch = newTypeMismatch
-            , _fOptions =
-                 _fOptions
-                 <&> Lens.mapped %~ toHoleOption r0 r1
             , _fHeal
             }
 
@@ -384,14 +359,13 @@ toBody v =
     BodyIfElse       x -> x & toIfElse v <&> BodyIfElse
     BodySimpleApply  x -> x & morphTraverse (\M_App_expr -> toExpression v) <&> BodySimpleApply
     BodyLabeledApply x -> x & toLabeledApply v <&> BodyLabeledApply
-    BodyHole         x -> x & toHole <&> BodyHole
     BodyFromNom      x -> x & toTId <&> BodyFromNom
     BodyToNom        x -> x & toNominal v <&> BodyToNom
     BodyGetVar       x -> x & toGetVar <&> BodyGetVar
     BodyLiteral      x -> x & BodyLiteral & pure
     BodyLam          x -> x & lamFunc (toFunction v) <&> BodyLam
     BodyFragment     x -> x & toFragment v <&> BodyFragment
-    BodyPlaceHolder    -> pure BodyPlaceHolder
+    BodyHole           -> pure BodyHole
 
 funcSignature :: LabeledApply v name i o a -> FunctionSignature
 funcSignature apply =

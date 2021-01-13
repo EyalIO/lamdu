@@ -65,7 +65,7 @@ makeLabeled ::
     ) =>
     ExprGui.Expr Sugar.LabeledApply i o -> GuiM env i o (Responsive o)
 makeLabeled (Ann (Const pl) apply) =
-    ExprEventMap.add ExprEventMap.defaultOptions pl <*>
+    ExprEventMap.add pl <*>
     ( Wrap.parentDelegator (WidgetIds.fromExprPayload (pl ^. _1)) <*>
         case apply ^. Sugar.aSpecialArgs of
         Sugar.Verbose -> makeFunc GetVarEdit.Normal func >>= wrap

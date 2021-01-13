@@ -64,7 +64,7 @@ stdWrap pl act =
     act
     >>> (takeFocusIfNeeded pl <&> (Widget.widget %~))
     >>> (maybeAddAnnotationPl (pl ^. _1) <&> (Widget.widget %~))
-    >>> ExprEventMap.add ExprEventMap.defaultOptions pl
+    >>> ExprEventMap.add pl
     where
         a >>> f = f <*> a
 

@@ -8,7 +8,6 @@ module Lamdu.Sugar.Lens
     , assignmentBodyAddFirstParam
     , binderFuncParamActions
     , binderResultExpr
-    , holeTransformExprs, holeOptionTransformExprs
     , getVarName
     , paneBinder
     , workAreaAnnotations, binderParamsAnnotations
@@ -120,21 +119,6 @@ binderResultExpr f (Ann (Const pl) x) =
         <&> BinderLet
         <&> Ann (Const pl)
 
-holeOptionTransformExprs ::
-    Monad i =>
-    (Expr Binder (Annotation () n) n i o () -> i (Expr Binder (Annotation () n) n i o ())) ->
-    HoleOption n i o ->
-    HoleOption n i o
-holeOptionTransformExprs onExpr =
-    hoResults . Lens.mapped . _2 %~ (>>= holeResultConverted onExpr)
-
-holeTransformExprs ::
-    Monad i =>
-    (Expr Binder (Annotation () n) n i o () -> i (Expr Binder (Annotation () n) n i o ())) ->
-    Hole n i o -> Hole n i o
-holeTransformExprs onExpr =
-    holeOptions . Lens.mapped . Lens.mapped %~ holeOptionTransformExprs onExpr
-
 assignmentBodyAddFirstParam :: Lens' (Assignment v name i o a) (AddFirstParam name i o)
 assignmentBodyAddFirstParam f (BodyFunction x) = fAddFirstParam f x <&> BodyFunction
 assignmentBodyAddFirstParam f (BodyPlain x) = apAddFirstParam f x <&> BodyPlain
@@ -232,7 +216,6 @@ instance BodyAnnotations LabeledApply
 instance BodyAnnotations Let
 
 instance BodyAnnotations Term where
-    bodyAnnotations _ BodyPlaceHolder = pure BodyPlaceHolder
     bodyAnnotations _ (BodyLiteral x) = BodyLiteral x & pure
     bodyAnnotations _ (BodyGetVar x) = BodyGetVar x & pure
     bodyAnnotations _ (BodyFromNom x) = BodyFromNom x & pure
@@ -246,5 +229,5 @@ instance BodyAnnotations Term where
     bodyAnnotations f (BodyInject x) = (iContent . bodyAnnotations) f x <&> BodyInject
     bodyAnnotations f (BodyCase x) = bodyAnnotations f x <&> BodyCase
     bodyAnnotations f (BodyLabeledApply x) = bodyAnnotations f x <&> BodyLabeledApply
-    bodyAnnotations _ (BodyHole x) = BodyHole x & pure
+    bodyAnnotations _ BodyHole = pure BodyHole
     bodyAnnotations f (BodyFragment x) = bodyAnnotations f x <&> BodyFragment

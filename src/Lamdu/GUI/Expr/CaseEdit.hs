@@ -123,7 +123,7 @@ make (Ann (Const pl) (Sugar.Case mArg (Sugar.Composite alts punned caseTail addA
     & wrap
     where
         wrap x =
-            ExprEventMap.add ExprEventMap.defaultOptions pl <*>
+            ExprEventMap.add pl <*>
             (Wrap.parentDelegator myId <*> x)
         myId = WidgetIds.fromExprPayload (pl ^. _1)
         headerId = Widget.joinId myId ["header"]

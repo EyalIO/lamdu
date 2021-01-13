@@ -3,7 +3,6 @@
 module Lamdu.Sugar.Parens
     ( MinOpPrec
     , addToWorkArea, addToExprWith
-    , addToBinderWith
     ) where
 
 import qualified Control.Lens as Lens
@@ -40,15 +39,6 @@ class AddParens expr where
 instance HasPrecedence name => AddParens (Assignment v name i o) where
     addToBody (BodyFunction x) = x & fBody %~ addToNode & BodyFunction
     addToBody (BodyPlain x) = x & apBody %~ addToBody & BodyPlain
-
-addToBinderWith ::
-    HasPrecedence name =>
-    MinOpPrec ->
-    Annotated a # Binder v name i o ->
-    Annotated (ParenInfo, a) # Binder v name i o
-addToBinderWith minOpPrec (Ann (Const pl) x) =
-    addToBody x
-    & Ann (Const (ParenInfo minOpPrec False, pl))
 
 instance HasPrecedence name => AddParens (Else v name i o) where
     addToBody (SimpleElse expr) = addToBody expr & SimpleElse
@@ -111,11 +101,10 @@ loopExprBody ::
     (NeedsParens, Term v name i o # Annotated (ParenInfo, a))
 loopExprBody parentPrec body_ =
     case body_ of
-    BodyPlaceHolder    -> result False BodyPlaceHolder
     BodyLiteral      x -> result False (BodyLiteral x)
     BodyGetVar       x -> result False (BodyGetVar x)
     BodyFromNom      x -> result False (BodyFromNom x)
-    BodyHole         x -> result False (BodyHole x)
+    BodyHole           -> result False BodyHole
     BodyRecord       x -> hmap (p #> addToNode) x & BodyRecord & result False
     BodyCase         x -> hmap (p #> addToNode) x & BodyCase & result (caseNeedsParens x)
     BodyLam          x -> leftSymbol (lamFunc . fBody) 0 BodyLam x

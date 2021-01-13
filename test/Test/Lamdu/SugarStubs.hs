@@ -72,10 +72,7 @@ arithmeticInfix2 :: String -> Infix2
 arithmeticInfix2 op = infix2Apply (defRef (fromString op) (fromString op))
 
 hole :: Expr
-hole =
-    Sugar.BodyHole Sugar.Hole
-    { Sugar._holeOptions = mempty
-    } & expr
+hole = expr Sugar.BodyHole
 
 ($$) :: Expr -> Expr -> Expr
 func $$ arg =

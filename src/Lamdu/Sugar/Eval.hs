@@ -141,7 +141,6 @@ instance AddEval Let
 instance AddEval Term where
     addToBody r i =
         \case
-        BodyPlaceHolder -> BodyPlaceHolder
         BodyGetVar x -> BodyGetVar x
         BodyLiteral x -> BodyLiteral x
         BodyFromNom x -> BodyFromNom x
@@ -152,7 +151,7 @@ instance AddEval Term where
         BodyIfElse x -> addToBody r i x & BodyIfElse
         BodyLam lam -> lam & lamFunc %~ addToBody r i & BodyLam
         BodyToNom nom -> nom & nVal %~ addToNode r & BodyToNom
-        BodyHole h -> BodyHole h
+        BodyHole -> BodyHole
         BodyCase x -> addToBody r i x & BodyCase
         BodyLabeledApply x -> addToBody r i x & BodyLabeledApply
         BodyFragment f -> f & fExpr %~ addToNode r & BodyFragment

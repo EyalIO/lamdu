@@ -5,11 +5,9 @@ module Lamdu.GUI.Expr
 import qualified Control.Monad.Reader as Reader
 import qualified GUI.Momentu.Element as Element
 import           GUI.Momentu.Responsive (Responsive)
-import qualified GUI.Momentu.Responsive as Responsive
 import qualified GUI.Momentu.State as GuiState
 import qualified GUI.Momentu.Widget as Widget
 import qualified GUI.Momentu.Widgets.Grid as Grid
-import qualified GUI.Momentu.Widgets.Label as Label
 import qualified GUI.Momentu.Widgets.Menu.Search as SearchMenu
 import qualified GUI.Momentu.Widgets.TextEdit as TextEdit
 import qualified Lamdu.GUI.Expr.ApplyEdit as ApplyEdit
@@ -57,15 +55,6 @@ make e =
             exprHiddenEntityIds <&> WidgetIds.fromEntityId
             & foldr (`GuiState.assignCursorPrefix` const myId) x
 
-placeHolder ::
-    (Monad i, Applicative o) =>
-    Sugar.Payload v name i o ->
-    GuiM env i o (Responsive o)
-placeHolder pl =
-    (Widget.makeFocusableView ?? WidgetIds.fromExprPayload pl <&> fmap)
-    <*> Label.make "★"
-    <&> Responsive.fromWithTextPos
-
 makeEditor ::
     ( Monad i, Monad o
     , Grid.HasTexts env
@@ -80,8 +69,7 @@ makeEditor ::
     ExprGui.Expr Sugar.Term i o -> GuiM env i o (Responsive o)
 makeEditor (Ann (Const pl) body) =
     case body of
-    Sugar.BodyPlaceHolder    -> placeHolder (pl ^. _1)
-    Sugar.BodyHole         x -> editor pl (Const x) HoleEdit.make
+    Sugar.BodyHole           -> HoleEdit.make pl
     Sugar.BodyLabeledApply x -> editor pl x ApplyEdit.makeLabeled
     Sugar.BodySimpleApply  x -> editor pl x ApplyEdit.makeSimple
     Sugar.BodyLam          x -> editor pl x LambdaEdit.make

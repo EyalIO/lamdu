@@ -5,8 +5,6 @@ module Lamdu.Sugar.Types.Parts
     ( VarInfo(..), _VarNominal, _VarGeneric, _VarFunction, _VarRecord, _VarVariant
     , FuncApplyLimit(..), _UnlimitedFuncApply, _AtMostOneFuncApply
     , Literal(..), _LiteralNum, _LiteralBytes, _LiteralText
-    , HoleResultScore(..), hrsNumFragments, hrsScore
-    , HoleTerm(..), _HoleName
     , -- Annotations
       Annotation(..), _AnnotationVal, _AnnotationType, _AnnotationNone
     -- Node actions
@@ -142,35 +140,16 @@ data Literal f
     | LiteralText (f Text)
     deriving Generic
 
-data HoleResultScore = HoleResultScore
-    { _hrsNumFragments :: !Int
-    , _hrsScore :: ![Int]
-    } deriving (Eq, Ord, Generic)
-
-data HoleTerm name
-    = HoleGetDef name
-    | HoleName name
-    | HoleInject name
-    | HoleGetField name
-    | HoleParamsRecord
-    | HoleRecord
-    | HoleCase
-    | HoleEmptyCase
-    | HoleIf
-    | HoleLambda
-    | HoleLet
-    deriving (Functor, Foldable, Traversable, Show)
-
 data ParenInfo = ParenInfo
     { _piMinOpPrec :: !Int
     , _piNeedParens :: !Bool
     } deriving (Eq, Show, Generic)
 
 traverse Lens.makeLenses
-    [ ''ClosedCompositeActions, ''FuncParam, ''FuncParamActions, ''HoleResultScore
+    [ ''ClosedCompositeActions, ''FuncParam, ''FuncParamActions
     , ''NullParamActions, ''NullaryVal, ''OpenCompositeActions, ''ParamInfo, ''ParenInfo
     ] <&> concat
 traverse Lens.makePrisms
     [ ''AddFirstParam, ''AddNextParam, ''Annotation, ''BinderParams, ''Delete
-    , ''DetachAction, ''FuncApplyLimit, ''HoleTerm, ''Literal, ''VarInfo
+    , ''DetachAction, ''FuncApplyLimit, ''Literal, ''VarInfo
     ] <&> concat

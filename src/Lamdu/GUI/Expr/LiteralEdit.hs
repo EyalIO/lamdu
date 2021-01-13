@@ -5,7 +5,6 @@ module Lamdu.GUI.Expr.LiteralEdit
 import           Control.Lens (LensLike')
 import qualified Control.Lens as Lens
 import qualified Control.Monad.Reader as Reader
-import qualified Data.Char as Char
 import           Data.Property (Property)
 import qualified Data.Property as Property
 import qualified Data.Text as Text
@@ -13,7 +12,6 @@ import           GUI.Momentu.Align (TextWidget)
 import qualified GUI.Momentu.Align as Align
 import qualified GUI.Momentu.Direction as Dir
 import qualified GUI.Momentu.Element as Element
-import           GUI.Momentu.EventMap (EventMap)
 import qualified GUI.Momentu.EventMap as E
 import           GUI.Momentu.Glue ((/|/))
 import qualified GUI.Momentu.Glue as Glue
@@ -27,7 +25,6 @@ import qualified GUI.Momentu.Widget as Widget
 import qualified GUI.Momentu.Widgets.FocusDelegator as FocusDelegator
 import qualified GUI.Momentu.Widgets.Grid as Grid
 import qualified GUI.Momentu.Widgets.Menu as Menu
-import qualified GUI.Momentu.Widgets.Menu.Search as SearchMenu
 import qualified GUI.Momentu.Widgets.TextEdit as TextEdit
 import qualified GUI.Momentu.Widgets.TextEdit.Property as TextEdits
 import qualified GUI.Momentu.Widgets.TextView as TextView
@@ -35,7 +32,6 @@ import           Lamdu.Config (Config)
 import qualified Lamdu.Config as Config
 import           Lamdu.Formatting (Format(..))
 import           Lamdu.GUI.Expr.EventMap (makeLiteralEventMap)
-import qualified Lamdu.GUI.Expr.HoleEdit.WidgetIds as HoleWidgetIds
 import           Lamdu.GUI.Monad (GuiM)
 import           Lamdu.GUI.Styled (label)
 import qualified Lamdu.GUI.Types as ExprGui
@@ -52,20 +48,6 @@ import qualified Lamdu.Sugar.Types as Sugar
 
 import           Lamdu.Prelude
 
-mkEditEventMap ::
-    ( MonadReader env m
-    , Has (MomentuTexts.Texts Text) env, Has (Texts.CodeUI Text) env
-    , Monad o
-    ) =>
-    m (Text -> o Sugar.EntityId -> EventMap (o GuiState.Update))
-mkEditEventMap =
-    Lens.view id
-    <&> \env valText setToHole ->
-    setToHole <&> HoleWidgetIds.make <&> HoleWidgetIds.hidOpen
-    <&> SearchMenu.enterWithSearchTerm valText
-    & E.keyPresses [ModKey mempty MetaKey.Key'Enter]
-    (E.toDoc env [has . MomentuTexts.edit, has . Texts.value])
-
 withStyle ::
     (MonadReader env m, HasStyle env) =>
     Lens.Getting TextEdit.Style Style TextEdit.Style -> m a -> m a
@@ -74,22 +56,15 @@ withStyle whichStyle =
 
 genericEdit ::
     ( Monad o, Format a, MonadReader env f, HasStyle env, GuiState.HasCursor env
-    , Has (MomentuTexts.Texts Text) env, Has (Texts.CodeUI Text) env
     , Has Dir.Layout env
     ) =>
     LensLike' (Const TextEdit.Style) Style TextEdit.Style ->
     Property o a ->
     Sugar.Payload v name i o -> f (Responsive o)
 genericEdit whichStyle prop pl =
-    do
-        editEventMap <-
-            case pl ^. Sugar.plActions . Sugar.delete of
-            Sugar.SetToHole action -> mkEditEventMap ?? valText ?? action
-            _ -> error "Cannot set literal to hole?!"
-        TextView.makeFocusable ?? valText ?? myId
-            <&> Align.tValue %~ Widget.weakerEvents editEventMap
-            <&> Responsive.fromWithTextPos
-            & withStyle whichStyle
+    TextView.makeFocusable ?? valText ?? myId
+    <&> Responsive.fromWithTextPos
+    & withStyle whichStyle
     where
         myId = WidgetIds.fromExprPayload pl
         valText = prop ^. Property.pVal & format
@@ -232,15 +207,6 @@ numEdit prop pl =
                     E.keyPresses [ModKey mempty MetaKey.Key'Backspace]
                     (toDoc [has . MomentuTexts.edit, has . MomentuTexts.delete])
                     (action <&> WidgetIds.fromEntityId <&> GuiState.updateCursor)
-                    <>
-                    E.charEventMap "Letter"
-                    (toDoc [has . MomentuTexts.edit, has . Texts.replace])
-                    holeWithChar
-                    where
-                        holeWithChar c =
-                            (action <&> HoleWidgetIds.make <&> HoleWidgetIds.hidOpen
-                                <&> SearchMenu.enterWithSearchTerm (Text.singleton c))
-                            <$ guard (Char.isAlpha c)
                 _ -> mempty
         newLiteralEvent <-
             if Text.null text

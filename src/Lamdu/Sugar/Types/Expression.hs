@@ -20,7 +20,7 @@ module Lamdu.Sugar.Types.Expression
     , AnnotatedArg(..), aaTag, aaExpr
     , LabeledApply(..), aFunc, aSpecialArgs, aAnnotatedArgs, aPunnedArgs
     , App(..), appFunc, appArg
-    , Fragment(..), fExpr, fHeal, fTypeMismatch, fOptions
+    , Fragment(..), fExpr, fHeal, fTypeMismatch
     , Lambda(..), lamFunc, lamMode, lamApplyLimit
     , InjectContent(..), _InjectVal, _InjectNullary
     , Inject(..), iTag, iContent
@@ -37,10 +37,6 @@ module Lamdu.Sugar.Types.Expression
         , fAddFirstParam, fBodyScopes
     , AssignPlain(..), apAddFirstParam, apBody
     , Assignment(..), _BodyFunction, _BodyPlain
-    -- Holes
-    , HoleOption(..), hoEntityId, hoSearchTerms, hoResults
-    , Hole(..), holeOptions
-    , HoleResult(..), holeResultConverted, holeResultPick
     -- If/else
     , IfElse(..), iIf, iThen, iElse
     , Else(..), _SimpleElse, _ElseIf
@@ -56,7 +52,6 @@ module Lamdu.Sugar.Types.Expression
     ) where
 
 import qualified Control.Lens as Lens
-import           Control.Monad.ListT (ListT)
 import           Data.Property (Property)
 import           Hyper
 import           Hyper.Type.AST.App (App(..), appFunc, appArg)
@@ -115,28 +110,7 @@ data Fragment v name i o k = Fragment
     { _fExpr :: k :# Term v name i o
     , _fHeal :: o EntityId
     , _fTypeMismatch :: Maybe (Annotated EntityId # Type name)
-    , _fOptions :: i [HoleOption name i o]
     } deriving Generic
-
-data HoleResult name i o = HoleResult
-    { _holeResultConverted :: Expr Binder (Annotation () name) name i o ()
-    , _holeResultPick :: o ()
-    } deriving Generic
-
-data HoleOption name i o = HoleOption
-    { _hoEntityId :: EntityId
-    , _hoSearchTerms :: i [HoleTerm name]
-    , -- A group in the hole results based on this option
-        -- TODO: HoleResult need not have actual eval results
-      _hoResults :: ListT i (HoleResultScore, i (HoleResult name i o))
-    } deriving Generic
-
-newtype Hole name i o = Hole
-    { _holeOptions :: i [HoleOption name i o]
-        -- outer "i" here is used to read index of globals
-        -- inner "i" is used to type-check/sugar every val in the option
-      -- TODO: Lifter from i to o?
-    } deriving stock Generic
 
 data Else v name i o f
     = SimpleElse (Term v name i o f)
@@ -192,7 +166,7 @@ data Term v name i o k
     = BodyLam (Lambda v name i o k)
     | BodySimpleApply (App (Term v name i o) k)
     | BodyLabeledApply (LabeledApply v name i o k)
-    | BodyHole (Hole name i o)
+    | BodyHole
     | BodyLiteral (Literal (Property o))
     | BodyRecord (Composite v name i o k)
     | BodyGetField (GetField v name i o k)
@@ -203,7 +177,6 @@ data Term v name i o k
     | BodyToNom (Nominal v name i o k)
     | BodyFromNom (TId name)
     | BodyFragment (Fragment v name i o k)
-    | BodyPlaceHolder -- Used for hole results, shown as "★"
     deriving Generic
 
 data Let v name i o k = Let
@@ -266,7 +239,7 @@ data Payload v name i o = Payload
 traverse Lens.makeLenses
     [ ''AnnotatedArg, ''AssignPlain, ''Case, ''CaseArg
     , ''Composite, ''CompositeItem, ''Fragment
-    , ''Function, ''GetField, ''Hole, ''HoleOption, ''HoleResult
+    , ''Function, ''GetField
     , ''IfElse, ''Inject, ''LabeledApply, ''Lambda, ''Let
     , ''NodeActions, ''Nominal, ''Payload
     ] <&> concat

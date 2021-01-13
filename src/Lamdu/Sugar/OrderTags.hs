@@ -4,7 +4,6 @@ module Lamdu.Sugar.OrderTags
     ( orderDef, orderType, orderNode
     ) where
 
-import qualified Control.Lens as Lens
 import           Control.Monad ((>=>))
 import           Control.Monad.Transaction (MonadTransaction(..))
 import           Data.List (sortOn)
@@ -108,12 +107,8 @@ instance MonadTransaction m i => Order v name i o (Sugar.Term v name i o) where
     order (Sugar.BodyRecord r) = orderRecord r <&> Sugar.BodyRecord
     order (Sugar.BodyLabeledApply a) = order a <&> Sugar.BodyLabeledApply
     order (Sugar.BodyCase c) = orderCase c <&> Sugar.BodyCase
-    order (Sugar.BodyHole a) = SugarLens.holeTransformExprs orderNode a & Sugar.BodyHole & pure
-    order (Sugar.BodyFragment a) =
-        a
-        & Sugar.fOptions . Lens.mapped . Lens.mapped %~ SugarLens.holeOptionTransformExprs orderNode
-        & Sugar.fExpr orderNode
-        <&> Sugar.BodyFragment
+    order Sugar.BodyHole = pure Sugar.BodyHole
+    order (Sugar.BodyFragment a) = Sugar.fExpr orderNode a <&> Sugar.BodyFragment
     order (Sugar.BodyIfElse x) = order x <&> Sugar.BodyIfElse
     order (Sugar.BodyInject x) = (Sugar.iContent . Sugar._InjectVal) orderNode x <&> Sugar.BodyInject
     order (Sugar.BodyToNom x) = Sugar.nVal orderNode x <&> Sugar.BodyToNom
@@ -122,7 +117,6 @@ instance MonadTransaction m i => Order v name i o (Sugar.Term v name i o) where
     order x@Sugar.BodyFromNom{} = pure x
     order x@Sugar.BodyLiteral{} = pure x
     order x@Sugar.BodyGetVar{} = pure x
-    order x@Sugar.BodyPlaceHolder{} = pure x
 
 orderNode ::
     (MonadTransaction m i, Order v name i o f) =>
