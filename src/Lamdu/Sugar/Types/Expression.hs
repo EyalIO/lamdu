@@ -7,9 +7,10 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, MultiParamTypeClasses, UndecidableInstances, DataKinds, GADTs, ConstraintKinds, FlexibleInstances #-}
 module Lamdu.Sugar.Types.Expression
     ( Expr, Body
+    , ReplaceOption(..), oTerms, oResult
     , NodeActions(..)
         , detach, delete, setToLiteral, setToEmptyRecord
-        , extract, mReplaceParent, wrapInRecord, mNewLet
+        , extract, mReplaceParent, wrapInRecord, mNewLet, replaceOptions
     , Payload(..), plEntityId, plAnnotation, plNeverShrinkTypeAnnotations, plActions
 
     , Term(..)
@@ -218,6 +219,13 @@ data Assignment v name i o f
     | BodyPlain (AssignPlain v name i o f)
     deriving Generic
 
+type Score = Int
+
+data ReplaceOption name i o = ReplaceOption
+    { _oTerms :: [OptionTerm name]
+    , _oResult :: i (Score, o EntityId)
+    } deriving Generic
+
 data NodeActions name i o = NodeActions
     { _detach :: DetachAction o
     , _delete :: Delete o
@@ -227,6 +235,7 @@ data NodeActions name i o = NodeActions
     , _mReplaceParent :: Maybe (o EntityId)
     , _wrapInRecord :: TagReplace name i o ()
     , _mNewLet :: Maybe (o EntityId)
+    , _replaceOptions :: i [ReplaceOption name i o]
     } deriving Generic
 
 data Payload v name i o = Payload
@@ -241,7 +250,7 @@ traverse Lens.makeLenses
     , ''Composite, ''CompositeItem, ''Fragment
     , ''Function, ''GetField
     , ''IfElse, ''Inject, ''LabeledApply, ''Lambda, ''Let
-    , ''NodeActions, ''Nominal, ''Payload
+    , ''NodeActions, ''Nominal, ''Payload, ''ReplaceOption
     ] <&> concat
 traverse Lens.makePrisms
     [''Assignment, ''Binder, ''CaseKind, ''CompositeTail, ''Else, ''InjectContent, ''Term] <&> concat

@@ -5,6 +5,7 @@ module Lamdu.Sugar.Types.Parts
     ( VarInfo(..), _VarNominal, _VarGeneric, _VarFunction, _VarRecord, _VarVariant
     , FuncApplyLimit(..), _UnlimitedFuncApply, _AtMostOneFuncApply
     , Literal(..), _LiteralNum, _LiteralBytes, _LiteralText
+    , OptionTerm(..)
     , -- Annotations
       Annotation(..), _AnnotationVal, _AnnotationType, _AnnotationNone
     -- Node actions
@@ -81,14 +82,14 @@ data ExtractDestination
     | ExtractToDef EntityId
 
 data DetachAction o
-    = FragmentAlready EntityId -- I'm an apply-of-hole, no need to detach
-    | FragmentExprAlready EntityId -- I'm an arg of apply-of-hole, no need to detach
+    = FragmentAlready EntityId -- I'm an apply-of-O, no need to detach
+    | FragmentExprAlready EntityId -- I'm an arg of apply-of-O, no need to detach
     | DetachAction (o EntityId) -- Detach me
     deriving Generic
 
 data Delete m
     = SetToHole (m EntityId)
-    | -- Changes the structure around the hole to remove the hole.
+    | -- Changes the structure around the O to remove the O.
       -- For example (f _) becomes (f) or (2 + _) becomes 2
       Delete (m EntityId)
     | CannotDelete
@@ -139,6 +140,11 @@ data Literal f
     | LiteralBytes (f ByteString)
     | LiteralText (f Text)
     deriving Generic
+
+data OptionTerm name
+    = OGetDef name | OName name | OInject name | OGetField name
+    | OParamsRecord | ORecord | OCase | OEmptyCase | OIf | OLambda | OLet
+    deriving (Functor, Foldable, Traversable, Show)
 
 data ParenInfo = ParenInfo
     { _piMinOpPrec :: !Int

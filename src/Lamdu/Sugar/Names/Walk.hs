@@ -135,7 +135,16 @@ toNodeActions ::
     MonadNaming m =>
     NodeActions (OldName m) (IM m) o ->
     m (NodeActions (NewName m) (IM m) o)
-toNodeActions = wrapInRecord toTagReplace
+toNodeActions actions@NodeActions{_wrapInRecord, _replaceOptions} =
+    do
+        _wrapInRecord <- toTagReplace _wrapInRecord
+        run <- opRun
+        pure actions
+            { _wrapInRecord
+            , _replaceOptions =
+                -- Hack: Just using TaggedVar as NameType because disambiguations aren't important in replace options
+                _replaceOptions >>= run . (traverse . oTerms . traverse . traverse) (opGetName Nothing TaggedVar)
+            }
 
 toResRecord ::
     MonadNaming m =>

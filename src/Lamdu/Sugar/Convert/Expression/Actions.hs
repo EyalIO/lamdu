@@ -198,6 +198,7 @@ makeActions exprPl =
             , _mReplaceParent = Nothing
             , _wrapInRecord = wrapInRec
             , _mNewLet = outerPos <&> DataOps.redexWrap <&> fmap EntityId.ofValI
+            , _replaceOptions = pure []
             }
     where
         stored = exprPl ^. Input.stored
