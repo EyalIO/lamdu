@@ -120,21 +120,8 @@ makeResultOption pl ctx results =
     Menu.Option
     { Menu._oId = results ^. ResultGroups.rgPrefixId
     , Menu._oRender = makeRenderedResult pl ctx (results ^. ResultGroups.rgMain)
-    , Menu._oSubmenuWidgets =
-        case results ^. ResultGroups.rgExtra of
-        [] -> Menu.SubmenuEmpty
-        extras ->
-            traverse (makeRenderedResult pl ctx) extras
-            <&> map makeSubMenu
-            & Menu.SubmenuItems
+    , Menu._oSubmenuWidgets = Menu.SubmenuEmpty
     }
-    where
-        makeSubMenu extraResultWidget =
-            Menu.Option
-            { Menu._oId = results ^. ResultGroups.rgPrefixId -- UGLY HACK
-            , Menu._oRender = pure extraResultWidget
-            , Menu._oSubmenuWidgets = Menu.SubmenuEmpty
-            }
 
 makeInferredTypeAnnotation ::
     ( MonadReader env m, Has Theme env, Element.HasAnimIdPrefix env
